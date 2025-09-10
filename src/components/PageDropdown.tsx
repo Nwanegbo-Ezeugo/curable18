@@ -1,7 +1,7 @@
 // src/components/PageDropdown.tsx
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronDownIcon } from "@heroicons/react/24/solid";
+
 import { Link } from "react-router-dom";
 
 const pages = [
@@ -24,7 +24,7 @@ export default function PageDropdown() {
         onClick={() => setOpen(!open)}
         className="bg-blue-700 text-white px-4 py-2 rounded shadow flex items-center hover:bg-blue-800 transition-colors"
       >
-        Pages <ChevronDownIcon className="ml-2 h-4 w-4" />
+        Pages v
       </button>
 
       {/* Dropdown list */}
