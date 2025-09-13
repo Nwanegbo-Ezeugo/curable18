@@ -102,9 +102,9 @@ export default function CurableFlow() {
   // Main dashboard with all check-in options
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+       {/* Header */}
       <div className="bg-primary text-primary-foreground p-4">
-        <div className="max-w-lg mx-auto">
+        <div className="">
           <h1 className="text-xl font-bold flex items-center gap-2">
             <User className="h-6 w-6" />
             Curable Health Monitor
@@ -225,6 +225,7 @@ export default function CurableFlow() {
                       </p>
                     </div>
                   </CardContent>
+                  <HealthCharts />
                 </Card>
               )}
             </TabsContent>
@@ -261,6 +262,7 @@ export default function CurableFlow() {
           </Tabs>
         </div>
       </div>
-    </div>
+ 
+        </div>
   );
 }

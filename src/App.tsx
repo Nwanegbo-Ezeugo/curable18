@@ -12,18 +12,14 @@ import HealthProfile from "./pages/HealthProfile";
 import Medications from "./pages/Medications";
 import MentalHealthCrisis from "./pages/MentalHealthCrisis";
 import NotFound from "./pages/NotFound";
-import PageDropdown from "./components/PageDropdown";
+import Sidebar from "./components/layout";
 
 const queryClient = new QueryClient();
 
-
-
-
-
-// Main App component is declared further below.
+// Protect routes
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -31,17 +27,18 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
+
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
-  
+
   return <>{children}</>;
 }
 
+// Public routes
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -49,11 +46,11 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
+
   if (user) {
     return <Navigate to="/dashboard" replace />;
   }
-  
+
   return <>{children}</>;
 }
 
@@ -65,42 +62,40 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={
-              <PublicRoute>
-                <Index />
-              </PublicRoute>
-            } />
-            <Route path="/auth" element={
-              <PublicRoute>
-                <Auth />
-              </PublicRoute>
-            } />
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/symptom-checker" element={
-              <ProtectedRoute>
-                <SymptomChecker />
-              </ProtectedRoute>
-            } />
-            <Route path="/health-profile" element={
-              <ProtectedRoute>
-                <HealthProfile />
-              </ProtectedRoute>
-            } />
-            <Route path="/medications" element={
-              <ProtectedRoute>
-                <Medications />
-              </ProtectedRoute>
-            } />
-            <Route path="/mental-health-crisis" element={
-              <ProtectedRoute>
-                <MentalHealthCrisis />
-              </ProtectedRoute>
-            } />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            {/* Public routes (NO sidebar) */}
+            <Route
+              path="/"
+              element={
+                <PublicRoute>
+                  <Index />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/auth"
+              element={
+                <PublicRoute>
+                  <Auth />
+                </PublicRoute>
+              }
+            />
+
+            {/* Protected routes (WITH sidebar layout) */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <Sidebar />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/symptom-checker" element={<SymptomChecker />} />
+              <Route path="/health-profile" element={<HealthProfile />} />
+              <Route path="/medications" element={<Medications />} />
+              <Route path="/mental-health-crisis" element={<MentalHealthCrisis />} />
+            </Route>
+
+            {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
