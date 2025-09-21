@@ -15,15 +15,13 @@ from pydantic import BaseModel
 from openai import OpenAI
 from supabase import create_client, Client
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
+
 from fastapi import WebSocket, WebSocketDisconnect
 from typing import List
 from app.chat.routes import router as chat_router
 
 # ========== Setup ==========
 
-
-load_dotenv()
 
 # Load ENV
 SUPABASE_URL = os.getenv("SUPABASE_URL")

@@ -1,12 +1,6 @@
 from supabase import create_client
 import os
-from dotenv import load_dotenv
 
-
-# ========== Setup ==========
-
-
-load_dotenv()
 
 # load env vars
 SUPABASE_URL = os.getenv("SUPABASE_URL")
