@@ -43,7 +43,7 @@ app.include_router(chat_router, prefix="/chat", tags=["chat"])
 # Allow frontend calls
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080", "https://curable-frontend.onrender.com"],
+    allow_origins=["http://localhost:8080", "https://curable18.onrender.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
