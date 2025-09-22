@@ -19,7 +19,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi import WebSocket, WebSocketDisconnect
 from typing import List
 from app.chat.routes import router as chat_router
+from dotenv import load_dotenv
 
+
+load_dotenv()
 # ========== Setup ==========
 
 
