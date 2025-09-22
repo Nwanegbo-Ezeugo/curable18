@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import axios from "axios"; 
+import axios from "axios";
+ 
 
 export default function ChatBox({ userId }: { userId: string }) {
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
@@ -17,7 +18,7 @@ export default function ChatBox({ userId }: { userId: string }) {
 
     try {
       // ✅ FIXED: Changed URL to point to your FastAPI backend on port 8000
-      const res = await axios.post("http://localhost:8000/chat", { // ← Changed to port 8000 and /chat
+      const res = await axios.post("https://curable.onrender.com", { // ← Changed to port 8000 and /chat
         user_id: userId,
         message: input,
       });
