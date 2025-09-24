@@ -58,7 +58,7 @@ def build_profile_summary(user_id: str) -> Dict[str, Any]:
     try:
         onboarding = supabase.table("onboarding").select("*").eq("user_id", user_id).execute().data
         three_day_checkins = supabase.table("three_day_checkins").select("*").eq("user_id", user_id).order("created_at", desc=True).limit(3).execute().data
-        mental_assesment = supabase.table("mental_health_assessment").select("*").eq("user_id", user_id).order("created_at", desc=True).limit(3).execute().data
+        mental_assessment = supabase.table("mental_health_assessment").select("*").eq("user_id", user_id).order("created_at", desc=True).limit(3).execute().data
         medication = supabase.table("medications").select("*").eq("user_id", user_id).execute().data
 
         user_name = onboarding[0].get('name', 'there') if onboarding else 'there'
@@ -153,9 +153,9 @@ def build_profile_summary(user_id: str) -> Dict[str, Any]:
             summary += "\n"
         
         # Mental health assessments
-        if mental_assesment:
+        if mental_assessment:
             summary += "RECENT MENTAL HEALTH ASSESSMENTS:\n"
-            for i, m in enumerate(mental_assesment[:2]):
+            for i, m in enumerate(mental_assessment[:2]):
                 summary += f"- Mood: {m.get('feeling_today', 'N/A')}, Stress: {m.get('stress_anxiety_overwhelm', 'N/A')}/10\n"
             summary += "\n"
         
