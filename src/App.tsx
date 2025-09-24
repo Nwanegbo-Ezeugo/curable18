@@ -13,7 +13,8 @@ import Medications from "./pages/Medications";
 import MentalHealthCrisis from "./pages/MentalHealthCrisis";
 import NotFound from "./pages/NotFound";
 import Sidebar from "./components/layout";
-import Checkins from "./pages/checkins.tsx";
+import Checkins from "./pages/Checkins.tsx";
+
 const queryClient = new QueryClient();
 
 // Protect routes
