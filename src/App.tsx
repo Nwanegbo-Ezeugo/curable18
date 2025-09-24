@@ -13,7 +13,7 @@ import Medications from "./pages/Medications";
 import MentalHealthCrisis from "./pages/MentalHealthCrisis";
 import NotFound from "./pages/NotFound";
 import Sidebar from "./components/layout";
-
+import Checkins from "./pages/checkins.tsx";
 const queryClient = new QueryClient();
 
 // Protect routes
@@ -27,6 +27,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
+  
 
   if (!user) {
     return <Navigate to="/auth" replace />;
@@ -93,6 +94,7 @@ const App = () => (
               <Route path="/health-profile" element={<HealthProfile />} />
               <Route path="/medications" element={<Medications />} />
               <Route path="/mental-health-crisis" element={<MentalHealthCrisis />} />
+              <Route path="/checkins" element={<Checkins />} />
             </Route>
 
             {/* Catch-all */}

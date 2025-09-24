@@ -12,6 +12,7 @@ const pages = [
   { name: "Health Profile", path: "/health-profile" },
   { name: "Medications", path: "/medications" },
   { name: "Mental Health Crisis", path: "/mental-health-crisis" },
+  { name: "Checkins", path: "/checkins" },
 ];
 
 export default function PageDropdown() {
