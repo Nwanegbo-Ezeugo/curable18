@@ -1,9 +1,10 @@
+// App.tsx
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./hooks/useAuth";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "./hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -13,7 +14,7 @@ import Medications from "./pages/Medications";
 import MentalHealthCrisis from "./pages/MentalHealthCrisis";
 import NotFound from "./pages/NotFound";
 import Sidebar from "./components/layout";
-import Checkins from "./pages/Checkins.tsx";
+import Checkins from "./pages/Checkins";
 
 const queryClient = new QueryClient();
 
@@ -28,7 +29,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
 
   if (!user) {
     return <Navigate to="/auth" replace />;
@@ -56,54 +56,65 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Layout for protected routes with sidebar
+function ProtectedLayout() {
+  return (
+    <div className="flex h-screen">
+      <Sidebar />
+      <main className="flex-1 overflow-auto">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
+
+// Main App component
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Public routes (NO sidebar) */}
-            <Route
-              path="/"
-              element={
-                <PublicRoute>
-                  <Index />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/auth"
-              element={
-                <PublicRoute>
-                  <Auth />
-                </PublicRoute>
-              }
-            />
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Routes>
+          {/* Public routes (NO sidebar) */}
+          <Route
+            path="/"
+            element={
+              <PublicRoute>
+                <Index />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/auth"
+            element={
+              <PublicRoute>
+                <Auth />
+              </PublicRoute>
+            }
+          />
 
-            {/* Protected routes (WITH sidebar layout) */}
-            <Route
-              element={
-                <ProtectedRoute>
-                  <Sidebar />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/symptom-checker" element={<SymptomChecker />} />
-              <Route path="/health-profile" element={<HealthProfile />} />
-              <Route path="/medications" element={<Medications />} />
-              <Route path="/mental-health-crisis" element={<MentalHealthCrisis />} />
-              <Route path="/checkins" element={<Checkins />} />
-            </Route>
+          {/* Protected routes (WITH sidebar layout) */}
+          <Route
+            element={
+              <ProtectedRoute>
+                <ProtectedLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/symptom-checker" element={<SymptomChecker />} />
+            <Route path="/health-profile" element={<HealthProfile />} />
+            <Route path="/medications" element={<Medications />} />
+            <Route path="/mental-health-crisis" element={<MentalHealthCrisis />} />
+            <Route path="/checkins" element={<Checkins />} />
+          </Route>
 
-            {/* Catch-all */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
+          {/* Catch-all */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
   </QueryClientProvider>
 );
 
