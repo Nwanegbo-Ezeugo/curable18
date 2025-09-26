@@ -8,6 +8,8 @@ import datetime
 import logging
 from typing import Dict, Any, List, Optional
 import json
+from fastapi.responses import StreamingResponse
+
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -31,6 +33,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 app = FastAPI(title="Curable Backend with Comprehensive Smart Summarization")
+
 
 # CORS
 app.add_middleware(
@@ -464,6 +467,42 @@ def chat_with_ai(req: ChatRequest):
     except Exception as e:
         logging.error(f"Chat error: {e}")
         raise HTTPException(status_code=500, detail="AI chat failed")
+    
+@app.post("/chat-stream")
+def chat_with_ai_stream(req: ChatRequest):
+    """Stream AI response word-by-word (for typing effect in UI)"""
+    try:
+        thread_id = get_or_create_thread(req.user_id)
+        profile_data = build_comprehensive_profile_summary(req.user_id)
+
+        # Include insights only for first message
+        client.beta.threads.messages.create(
+            thread_id=thread_id,
+            role="user",
+            content=req.message
+        )
+
+        # Use OpenAI streaming
+        def generate():
+            stream = client.chat.completions.create(
+                model=ANALYSIS_MODEL,
+                messages=[
+                    {"role": "system", "content": "You are a medical analyst skilled in integrating quantitative and qualitative patient data. Provide nuanced clinical insights."},
+                    {"role": "user", "content": req.message}
+                ],
+                stream=True,
+            )
+            for chunk in stream:
+                delta = chunk.choices[0].delta
+                if delta and delta.get("content"):
+                    yield delta["content"]
+
+        return StreamingResponse(generate(), media_type="text/plain")
+
+    except Exception as e:
+        logging.error(f"Streaming chat error: {e}")
+        raise HTTPException(status_code=500, detail="AI chat stream failed")
+
 
 # ... (keep your existing routes like /user/{user_id}/insights, /cleanup/{user_id}, etc.)
 
