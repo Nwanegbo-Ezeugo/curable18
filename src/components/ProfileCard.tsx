@@ -18,12 +18,16 @@ type Onboarding = {
   family_history?: string;
 };
 
-type WeeklyCheckin = {
+type ThreeDayCheckin = {
   id: string;
   user_id: string;
-  sleep_hours?: number;
-  stress_level?: number;
-  exercise_frequency?: number;
+  sleep_hours_numeric?: number;
+  mood_numeric?: number;
+  what_stresses_you_numeric?: number;
+  exercise_level_numeric?: number;
+  energy_level_numeric?: number;
+  meals_today_numeric?: number;
+  any_headache_numeric?: number;
   created_at: string;
 };
 
@@ -44,7 +48,7 @@ type Medication = {
 
 export default function PatientProfileSummary({ userId }: { userId?: string }) {
   const [onboarding, setOnboarding] = useState<Onboarding | null>(null);
-  const [weeklyCheckin, setWeeklyCheckin] = useState<WeeklyCheckin | null>(null);
+  const [threeDayCheckin, setThreeDayCheckin] = useState<ThreeDayCheckin | null>(null);
   const [mentalAssessment, setMentalAssessment] = useState<MentalHealthAssessment | null>(null);
   const [medications, setMedications] = useState<Medication[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,15 +64,15 @@ export default function PatientProfileSummary({ userId }: { userId?: string }) {
 
         if (onboardingError) console.error("Onboarding error:", onboardingError);
 
-        const { data: weeklyData, error: weeklyError } = await supabase
-          .from("weekly_checkins")
+        const { data: threeDayData, error: threeDayError } = await supabase
+          .from("three_day_checkins")
           .select("*")
           .eq("user_id", actualUserId)
           .order("created_at", { ascending: false })
           .limit(1)
           .single();
 
-        if (weeklyError) console.error("Weekly checkin error:", weeklyError);
+        if (threeDayError) console.error("Three day checkin error:", threeDayError);
 
         const { data: mentalData, error: mentalError } = await supabase
           .from("mental_health_assessments")
@@ -88,7 +92,7 @@ export default function PatientProfileSummary({ userId }: { userId?: string }) {
         if (medsError) console.error("Medications error:", medsError);
 
         setOnboarding(onboardingData);
-        setWeeklyCheckin(weeklyData);
+        setThreeDayCheckin(threeDayData);
         setMentalAssessment(mentalData);
         setMedications(medsData || []);
 
@@ -146,14 +150,10 @@ export default function PatientProfileSummary({ userId }: { userId?: string }) {
       return { bmi: null, category: "N/A" };
     }
 
-    // Convert height from cm to meters
     const heightM = heightCm / 100;
-    
-    // Calculate BMI: weight (kg) / height (m) squared
     const bmi = weightKg / (heightM * heightM);
-    const roundedBMI = Math.round(bmi * 10) / 10; // Round to 1 decimal place
+    const roundedBMI = Math.round(bmi * 10) / 10;
 
-    // Determine BMI category
     let category = "";
     if (bmi < 18.5) category = "Underweight";
     else if (bmi < 25) category = "Normal weight";
@@ -166,10 +166,10 @@ export default function PatientProfileSummary({ userId }: { userId?: string }) {
   };
 
   const getBMIColor = (bmi: number) => {
-    if (bmi < 18.5) return '#FFD700'; // Yellow for underweight
-    if (bmi < 25) return '#00FF00';   // Green for normal
-    if (bmi < 30) return '#FFA500';   // Orange for overweight
-    return '#FF0000';                 // Red for obesity
+    if (bmi < 18.5) return '#FFD700';
+    if (bmi < 25) return '#00FF00';
+    if (bmi < 30) return '#FFA500';
+    return '#FF0000';
   };
 
   const colors = {
@@ -284,8 +284,7 @@ export default function PatientProfileSummary({ userId }: { userId?: string }) {
         </div>
       )}
 
-      {/* Rest of the component remains the same for weekly checkins, mental health, and medications */}
-      {weeklyCheckin && (
+      {threeDayCheckin && (
         <div style={{ 
           marginBottom: '2rem', 
           padding: '1.8rem', 
@@ -294,14 +293,17 @@ export default function PatientProfileSummary({ userId }: { userId?: string }) {
           background: `linear-gradient(145deg, ${colors.darkBlue2} 0%, ${colors.darkerBlue} 100%)`, 
           boxShadow: '0 6px 20px rgba(65, 105, 225, 0.25)' 
         }}>
-          <h3 style={{ color: colors.lightBlue, marginBottom: '1.2rem', fontSize: '1.5rem' }}>📊 Latest Weekly Check-in</h3>
+          <h3 style={{ color: colors.lightBlue, marginBottom: '1.2rem', fontSize: '1.5rem' }}>📊 Latest 3-Day Check-in</h3>
           <div style={{ display: 'flex', gap: '2.5rem', flexWrap: 'wrap' }}>
-            <p><strong>😴 Sleep:</strong> {weeklyCheckin.sleep_hours || "N/A"} hours/night</p>
-            <p><strong>😰 Stress Level:</strong> {weeklyCheckin.stress_level ? `${weeklyCheckin.stress_level}/10` : "N/A"}</p>
-            <p><strong>💪 Exercise:</strong> {weeklyCheckin.exercise_frequency ? `${weeklyCheckin.exercise_frequency}x/week` : "N/A"}</p>
+            <p><strong>😴 Sleep:</strong> {threeDayCheckin.sleep_hours_numeric || "N/A"} hours/night</p>
+            <p><strong>😊 Mood:</strong> {threeDayCheckin.mood_numeric ? `${threeDayCheckin.mood_numeric}/10` : "N/A"}</p>
+            <p><strong>😰 Stress Level:</strong> {threeDayCheckin.what_stresses_you_numeric ? `${threeDayCheckin.what_stresses_you_numeric}/10` : "N/A"}</p>
+            <p><strong>💪 Exercise:</strong> {threeDayCheckin.exercise_level_numeric ? `${threeDayCheckin.exercise_level_numeric}/10 intensity` : "N/A"}</p>
+            <p><strong>⚡ Energy:</strong> {threeDayCheckin.energy_level_numeric ? `${threeDayCheckin.energy_level_numeric}/10` : "N/A"}</p>
+            <p><strong>🍽️ Meals:</strong> {threeDayCheckin.meals_today_numeric || "N/A"} today</p>
           </div>
           <p style={{ marginTop: '1rem', color: '#A9A9A9', fontSize: '0.9rem' }}>
-            <small>Last updated: {new Date(weeklyCheckin.created_at).toLocaleDateString()}</small>
+            <small>Last updated: {new Date(threeDayCheckin.created_at).toLocaleDateString()}</small>
           </p>
         </div>
       )}
@@ -350,7 +352,7 @@ export default function PatientProfileSummary({ userId }: { userId?: string }) {
         </div>
       )}
 
-      {!onboarding && !weeklyCheckin && !mentalAssessment && medications.length === 0 && (
+      {!onboarding && !threeDayCheckin && !mentalAssessment && medications.length === 0 && (
         <div style={{ textAlign: 'center', padding: '3rem', color: '#888' }}>
           <p>No patient data found for this user.</p>
         </div>
