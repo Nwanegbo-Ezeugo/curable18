@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 
 export default function ChatBox({ userId }: { userId: string }) {
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
@@ -28,26 +27,44 @@ export default function ChatBox({ userId }: { userId: string }) {
     if (!input.trim()) return;
 
     const userMsg = { role: "user", content: input };
-    const updatedMessages = [...messages, userMsg];
-    setMessages(updatedMessages);
+    setMessages(prev => [...prev, userMsg]);
     setInput("");
     setLoading(true);
 
     try {
-      const res = await axios.post("https://curable.onrender.com/chat", {
-        user_id: userId,
-        message: input,
+      const res = await fetch("https://curable.onrender.com/chat-stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, message: input }),
       });
 
-      const aiMsg = { role: "assistant", content: res.data.reply };
-      setMessages(prev => [...prev, aiMsg]);
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      let aiContent = "";
+
+      // Add an empty assistant message to fill as stream comes in
+      setMessages(prev => [...prev, { role: "assistant", content: "" }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        aiContent += chunk;
+
+        // Update only the last assistant message progressively
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: "assistant", content: aiContent };
+          return updated;
+        });
+      }
     } catch (err) {
-      console.error("Chat error:", err);
+      console.error("Chat stream error:", err);
       setMessages(prev => [
         ...prev,
-        { 
-          role: "assistant", 
-          content: "⚠️ Sorry, I'm having trouble connecting right now. Please try again later." 
+        {
+          role: "assistant",
+          content: "⚠️ Sorry, I'm having trouble streaming right now. Please try again later.",
         },
       ]);
     } finally {
@@ -76,7 +93,7 @@ export default function ChatBox({ userId }: { userId: string }) {
         )}
       </div>
 
-      {/* Messages Container */}
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto mb-4 space-y-4 p-2">
         {messages.length === 0 ? (
           <div className="text-center text-gray-400 mt-10">
@@ -86,12 +103,7 @@ export default function ChatBox({ userId }: { userId: string }) {
           </div>
         ) : (
           messages.map((m, i) => (
-            <div
-              key={i}
-              className={`flex ${
-                m.role === "user" ? "justify-end" : "justify-start"
-              }`}
-            >
+            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-lg ${
                   m.role === "user"
@@ -100,32 +112,40 @@ export default function ChatBox({ userId }: { userId: string }) {
                 }`}
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`text-xs font-semibold ${
-                    m.role === "user" ? "text-blue-100" : "text-gray-300"
-                  }`}>
+                  <span
+                    className={`text-xs font-semibold ${
+                      m.role === "user" ? "text-blue-100" : "text-gray-300"
+                    }`}
+                  >
                     {m.role === "user" ? "You" : "Assistant"}
                   </span>
                 </div>
-                <p className="text-sm leading-relaxed">{m.content}</p>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">{m.content}</p>
               </div>
             </div>
           ))
         )}
-        
-        {loading && (
+
+        {loading && messages[messages.length - 1]?.role !== "assistant" && (
           <div className="flex justify-start">
             <div className="bg-gray-700 border border-gray-600 rounded-2xl rounded-bl-none px-4 py-3 shadow-lg">
               <div className="flex space-x-2">
                 <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"></div>
-                <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                <div
+                  className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"
+                  style={{ animationDelay: "0.1s" }}
+                ></div>
+                <div
+                  className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"
+                  style={{ animationDelay: "0.2s" }}
+                ></div>
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Input Form */}
+      {/* Input */}
       <form onSubmit={sendMessage} className="flex gap-3 pt-4 border-t border-gray-700">
         <div className="flex-1 relative">
           <input
