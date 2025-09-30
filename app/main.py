@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+
+
 # Import routers
 from app.chat.routes import router as chat_router
 from app.profile.routes import router as profile_router
@@ -30,6 +32,5 @@ app.include_router(profile_router, prefix="/profile", tags=["Profile"])
 @app.get("/", tags=["Health"])
 async def root():
     return {"message": "Backend running!"}
-
 
 

@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 export default function ChatBox({ userId }: { userId: string }) {
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load messages from localStorage on component mount
   useEffect(() => {
     const savedMessages = localStorage.getItem(`chatMessages_${userId}`);
     if (savedMessages) {
@@ -17,10 +17,13 @@ export default function ChatBox({ userId }: { userId: string }) {
     }
   }, [userId]);
 
-  // Save messages to localStorage whenever messages change
   useEffect(() => {
     localStorage.setItem(`chatMessages_${userId}`, JSON.stringify(messages));
   }, [messages, userId]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   async function sendMessage(e: React.FormEvent) {
     e.preventDefault();
@@ -28,27 +31,52 @@ export default function ChatBox({ userId }: { userId: string }) {
 
     const userMsg = { role: "user", content: input };
     setMessages(prev => [...prev, userMsg]);
+    const userInput = input;
     setInput("");
     setLoading(true);
 
+    // Determine API URL based on environment
+    const API_URL = window.location.hostname === 'localhost' 
+      ? 'http://localhost:8000'
+      : 'https://curable.onrender.com';
+
+    console.log('Sending to:', `${API_URL}/chat-stream`);
+
     try {
-      const res = await fetch("https://curable.onrender.com/chat-stream", {
+      const res = await fetch(`${API_URL}/chat-stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId, message: input }),
+        body: JSON.stringify({ user_id: userId, message: userInput }),
       });
 
+      console.log('Response status:', res.status);
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
       const reader = res.body?.getReader();
+      if (!reader) {
+        throw new Error("No reader available");
+      }
+
       const decoder = new TextDecoder();
       let aiContent = "";
 
       // Add an empty assistant message to fill as stream comes in
       setMessages(prev => [...prev, { role: "assistant", content: "" }]);
 
+      console.log('Starting to read stream...');
+
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          console.log('Stream complete');
+          break;
+        }
+        
         const chunk = decoder.decode(value, { stream: true });
+        console.log('Received chunk:', chunk);
         aiContent += chunk;
 
         // Update only the last assistant message progressively
@@ -60,19 +88,22 @@ export default function ChatBox({ userId }: { userId: string }) {
       }
     } catch (err) {
       console.error("Chat stream error:", err);
-      setMessages(prev => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "⚠️ Sorry, I'm having trouble streaming right now. Please try again later.",
-        },
-      ]);
+      setMessages(prev => {
+        // Remove empty assistant message if it exists
+        const filtered = prev.filter(m => m.content !== "");
+        return [
+          ...filtered,
+          {
+            role: "assistant",
+            content: "⚠️ Sorry, I'm having trouble right now. Please try again later.",
+          },
+        ];
+      });
     } finally {
       setLoading(false);
     }
   }
 
-  // Clear chat history
   const clearChat = () => {
     setMessages([]);
     localStorage.removeItem(`chatMessages_${userId}`);
@@ -80,7 +111,6 @@ export default function ChatBox({ userId }: { userId: string }) {
 
   return (
     <div className="bg-gradient-to-br from-gray-900 to-gray-800 shadow-2xl rounded-2xl p-6 flex flex-col h-[600px] border border-gray-700">
-      {/* Header */}
       <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-700">
         <h2 className="text-xl font-semibold text-white">AI Assistant</h2>
         {messages.length > 0 && (
@@ -93,7 +123,6 @@ export default function ChatBox({ userId }: { userId: string }) {
         )}
       </div>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto mb-4 space-y-4 p-2">
         {messages.length === 0 ? (
           <div className="text-center text-gray-400 mt-10">
@@ -120,7 +149,12 @@ export default function ChatBox({ userId }: { userId: string }) {
                     {m.role === "user" ? "You" : "Assistant"}
                   </span>
                 </div>
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">{m.content}</p>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                  {m.content}
+                  {m.role === "assistant" && m.content === "" && (
+                    <span className="inline-block w-2 h-4 bg-gray-400 animate-pulse ml-1"></span>
+                  )}
+                </p>
               </div>
             </div>
           ))
@@ -143,9 +177,9 @@ export default function ChatBox({ userId }: { userId: string }) {
             </div>
           </div>
         )}
+        <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
       <form onSubmit={sendMessage} className="flex gap-3 pt-4 border-t border-gray-700">
         <div className="flex-1 relative">
           <input
